@@ -109,7 +109,7 @@ def cutter(video_name, timestr, quote):
             'Time': dispstr,
             'Length':audio_length,
             'Submission':generate_time,
-            'Download':'http://104.207.139.100/audio_cutter/data/export/' + export_file_name,
+            'Download':'http://140.82.4.17/' + export_file_name,
             'Source':video_name,
             }
 

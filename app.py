@@ -24,13 +24,11 @@ DEBUG = True
 FRAMERATE = 24.0
 WAIT = 3
 INSTRUCTION = '''#### Instructions:
- Input a time interval below, using format of 'mm:ss:msc-mm:ss:msc'.  
- Acceptable time format: 00:21:100-00:23:500 or 00:21-00:23 or 21-23  
- **Example Input:**  
- 00:21:100-00:23:500  
- RRRRRRR   
- **Note: this system currently only supports two-line inputs**  
- YouTube player cannot show progress in milliseconds so it is advised to use a local player for more precise results.
+ Input a time interval below, followed by a quote in the next line.  
+ **Example Input:**    
+ 01:30-01:34  
+ For instance, what is r?  
+ **Note: Only two-line inputs are supported currently.**  
 '''
 
 record_path = 'data/export.csv'
@@ -68,7 +66,7 @@ if 'DYNO' in os.environ:
         'external_url': 'https://cdn.rawgit.com/chriddyp/ca0d8f02a1659981a0ea7f013a378bbd/raw/e79f3f789517deec58f41251f7dbb6bee72c44ab/plotly_ga.js'
     })
 
-
+app.title = 'R'
 app.scripts.config.serve_locally = True
 app.config['suppress_callback_exceptions'] = True
 
@@ -91,9 +89,8 @@ app.layout = html.Div([
             'I want to ask how many people once used R? (Pre-Release)',
             id='title'
         ),
-        html.Img(
-            src="https://www.r-project.org/Rlogo.png"
-        )
+        html.Img(src='http://140.82.4.17/R.gif', style={'width' : '75px','height':'75px'}),
+        #html.Img(src="https://www.r-project.org/Rlogo.png",style={'width' : '60px','height':'60px'})
     ],
         className="banner",
     ),
@@ -287,4 +284,4 @@ for css in external_css:
 
 # Running the server
 if __name__ == '__main__':
-    app.run_server(debug=DEBUG, host='0.0.0.0', port=8050)
+    app.run_server(debug=False, host='0.0.0.0', port=22222)
