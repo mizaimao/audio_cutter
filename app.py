@@ -24,11 +24,10 @@ DEBUG = True
 FRAMERATE = 24.0
 WAIT = 3
 INSTRUCTION = '''#### Instructions:
- Input a time interval below, followed by a quote in the next line.  
- **Example Input:**    
- 01:30-01:34  
- For instance, what is r?  
- **Note: Only two-line inputs are supported currently.**  
+ Input a time interval below, followed by a quote.   
+ Time format is (0 if empty):  
+ **minute:second:milliseconds** to **minute:second:milliseconds**   
+ Then input a one-line quote in the textbox
 '''
 
 record_path = 'data/export.csv'
@@ -37,7 +36,7 @@ cell_style=[
     {'if': {'column_id': 'Index'},
         'width': '4%', 'textAlign': 'left'},
     {'if': {'column_id': 'Quotes'},
-        'width': '66%', 'textAlign': 'left'},
+        'width': '63%', 'textAlign': 'left'},
     {'if': {'column_id': 'Time'},
         'width': '10%'},
     {'if': {'column_id': 'Length'},
@@ -46,11 +45,16 @@ cell_style=[
         'width': '10%'},
     {'if': {'column_id': 'Download'},
         'width': '0%'},
+    {'if': {'column_id': 'Edits'},
+        'width': '3%'},
     {'if': {'column_id': 'Source'},
         'width': '5%'},
     ]
 CSSSTYLE=[{'selector': '.dash-cell div.dash-cell-value',
         'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'}]
+STYLE_TABLE_STYLE={'overflowX': 'scroll','overflowY':'scroll','maxHeight':500}
+MINSEC_INPUT_STYLE={'width': '10%', 'display': 'inline-block','min':'0','max':'59'}
+MSEC_INPUT_STYPE={'width': '11%', 'display': 'inline-block','min':'0','max':'999'}
 
 df=pd.read_csv(record_path,sep='\t')
 
@@ -66,7 +70,7 @@ if 'DYNO' in os.environ:
         'external_url': 'https://cdn.rawgit.com/chriddyp/ca0d8f02a1659981a0ea7f013a378bbd/raw/e79f3f789517deec58f41251f7dbb6bee72c44ab/plotly_ga.js'
     })
 
-app.title = 'R'
+app.title = 'R Fragment Extractor'
 app.scripts.config.serve_locally = True
 app.config['suppress_callback_exceptions'] = True
 
@@ -89,7 +93,7 @@ app.layout = html.Div([
             'I want to ask how many people once used R? (Pre-Release)',
             id='title'
         ),
-        html.Img(src='http://140.82.4.17/R.gif', style={'width' : '75px','height':'75px'}),
+        html.Img(src='http://144.202.14.79/R.gif', style={'width' : '75px','height':'75px'}),
         #html.Img(src="https://www.r-project.org/Rlogo.png",style={'width' : '60px','height':'60px'})
     ],
         className="banner",
@@ -122,12 +126,33 @@ app.layout = html.Div([
                 ],),
                 html.Div([
                     dcc.Markdown(INSTRUCTION),
+		    html.Div([
+		    	dcc.Input(id='start_min', type='number', style=MINSEC_INPUT_STYLE, min=0, max=59, value=''),
+			html.Div(dcc.Markdown(' :'), style={'width': '1%', 'display': 'inline-block', 'marginLeft':'5'}),
+			dcc.Input(id='start_sec', type='number', style=MINSEC_INPUT_STYLE,  min=0, max=59,value=''),
+			html.Div(dcc.Markdown(' :'), style={'width': '1%', 'display': 'inline-block','marginLeft': '5'}),
+			dcc.Input(id='start_msec', type='number', style=MSEC_INPUT_STYPE, min=0, max=999, value=''),
+			html.Div(dcc.Markdown(' to'), style={'width': '3%', 'display': 'inline-block','marginLeft': '8'}),
+			dcc.Input(id='end_min', type='number', style=MINSEC_INPUT_STYLE,  min=0, max=59,value=''),
+			html.Div(dcc.Markdown(' :'), style={'width': '1%', 'display': 'inline-block','marginLeft': '5'}),
+			dcc.Input(id='end_sec', type='number', style=MINSEC_INPUT_STYLE,  min=0, max=59,value=''),
+			html.Div(dcc.Markdown(' :'), style={'width': '1%', 'display': 'inline-block','marginLeft': '5'}),
+			dcc.Input(id='end_msec', type='number', style=MSEC_INPUT_STYPE,  min=0, max=999,value=''),
+		    ],
+			style={'width':'600', 'vertical-align': 'middle', 'marginBottom': '10'},
+			className='container'),
                     dcc.Textarea(
                         id='quotearea',
-                        placeholder='Enter text...',
+                        placeholder='Enter quote...',
                         value='',
                         style={'width': '95%'}
                     ),
+		    dcc.Checklist(
+			id='mono_checkbox',
+			options=[{'label': 'Mono output (joining stereo tracks) (function disabled)','value': 'mono'}],
+			values=['mono'],
+			labelStyle={'display': 'inline-block'},
+		    ),
                     html.Button('Submit', id='button'),
                     html.Div(id='output-container-button',
                             children='Enter a time interval, and a quote then press submit')
@@ -146,7 +171,7 @@ app.layout = html.Div([
                         css=CSSSTYLE,
                         columns=[{"name": i, "id": i, 'hidden': True if i == 'Download' else False} for i in df.columns],
                         data=df.to_dict("rows"),
-                        style_cell_conditional=cell_style,style_table={'overflowX': 'scroll'},
+                        style_cell_conditional=cell_style,style_table=STYLE_TABLE_STYLE,
                     ),
                     style={
                         'margin_top': '60px',
@@ -154,26 +179,35 @@ app.layout = html.Div([
                     }
                 ),
                 html.Div([ # Right lower Downloading
-                    html.Div(dcc.Markdown('### Download Options') ),
-                    html.Div(
-                        dcc.Dropdown(
-                            id='dl-dropdown',
-                            options=[
-                            {'label': x, 'value': x} for x in df['Index']
-                            ],
-                            #multi=True,
-                            #searchable=False,
-                            placeholder="Select an index to download",
-                            value='1'
-                        ),
-                        style={'width': '70%', 'height':'120%', 'horizontal-align': 'middle',
-                            }#'margin': '10px 100px 100px 300px'}  # top right bottom left
-                    ),
+                    html.Div(dcc.Markdown('### Options') ),
+                    html.Div([
+			html.Div(
+				dcc.Dropdown(id='dl-dropdown',
+                            		options=[
+                            		{'label': x, 'value': x} for x in df['Index']
+                            		],
+                            		#multi=True,
+                            		#searchable=False,
+                            		placeholder="Select an index to download",
+                            		value=1),
+				style={'height':'120%'},
+				className="six columns",
+			
+			),
+			html.Div(
+				html.Button('Edit', id='edit'),
+				className="three columns",
+			),	
+			html.Div(
+				html.A('Download', style={'fontSize': '30'} , id='download-link', download="", href="", target="_blank"),
+				className="three columns",
+			),	
+		    ]),
                     html.P('', id='preview'),
-                    html.A('Download', style={'fontSize': '30'} , id='download-link', download="", href="", target="_blank")
+                    html.Div(dcc.Markdown(children='', id = 'editstr')),
                 ],
                 style={'width': '70%','display': 'inline-block','vertical-align': 'middle', 'horizontal-align': 'middle',
-                'margin': '50px 100px 10px 200px'
+                'margin': '10px 40px 10px 40px'
                     },
                 className='row'
                 ),
@@ -215,47 +249,74 @@ def select_footage(footage):
 # Submission
 @app.callback(
     dash.dependencies.Output('output-container-button', 'children'),
-    [],
-    [dash.dependencies.State('quotearea', 'value'),
-    dash.dependencies.State('dropdown-footage-selection','value')],
-    [dash.dependencies.Event('button', 'click')])
-def update_output(quote, video_input):
+    [dash.dependencies.Input('button', 'n_clicks')],
+    [dash.dependencies.State('start_min', 'value'),
+    dash.dependencies.State('start_sec', 'value'),
+    dash.dependencies.State('start_msec', 'value'),
+    dash.dependencies.State('end_min', 'value'),
+    dash.dependencies.State('end_sec', 'value'),
+    dash.dependencies.State('end_msec', 'value'),
+    dash.dependencies.State('quotearea', 'value'),
+    dash.dependencies.State('dropdown-footage-selection','value'),
+    dash.dependencies.State('mono_checkbox','values'),],
+    )
+def update_output(n_click, start_min, start_sec, start_msec, end_min, end_sec, end_msec, quote, video_input, mono):
     result = 'Invalid input'
     quote = quote.split('\n')
-    if len(quote) != 2:
+    if len(quote) != 1:
         return result 
-    timeinput = quote[0]
-    quoteinput = quote[1]
-
+    timeinputlist = [start_min, start_sec, start_msec, end_min, end_sec, end_msec]
+    timeinputlist = [x if x else 0 for x in timeinputlist]
+    if not sum(timeinputlist):
+        return 'Enter a time interval, and a quote then press submit'
+    timeinput = '{:02d}:{:02d}:{:03d}-{:02d}:{:02d}:{:03d}'.format(timeinputlist[0],timeinputlist[1],timeinputlist[2],timeinputlist[3],timeinputlist[4],timeinputlist[5])
+    print(timeinput)
+    quoteinput = quote[0]
     print(quoteinput,timeinput, video_input)
-    result = cutter.cutter(video_input, timeinput, quoteinput)
+    result = cutter.cutter(video_input, timeinput, quoteinput, mono!=[], -1)
     return result
 
 # Update table
 @app.callback(
     dash.dependencies.Output('html_table', 'children'),
-    [],[],
-    [dash.dependencies.Event('button', 'click')])
-def update_table():
+    [dash.dependencies.Input('button', 'n_clicks')],
+    [])
+def update_table(n_click):
     time.sleep(WAIT)
     global df
     df = pd.read_csv(record_path,sep='\t') 
     return dash_table.DataTable(css=CSSSTYLE,columns=[{"name": i, "id": i, 
         'hidden': True if i == 'Download' else False,
         'align': 'left' if i == 'Quotes' else 'right',
-        } for i in df.columns],style_table={'overflowX': 'scroll'},
+        } for i in df.columns],style_table=STYLE_TABLE_STYLE,
             data=df.to_dict("rows"),style_cell_conditional=cell_style)
 
 
 # Update Download
 @app.callback(
     dash.dependencies.Output('dl-dropdown', 'options'),
-    [],[],
-    [dash.dependencies.Event('button', 'click')])
-def update_table():
+    [dash.dependencies.Input('button', 'n_clicks')],
+    [])
+def update_dropdown(n_click):
     time.sleep(WAIT+1)
     return [{'label': x, 'value': x} for x in df['Index']]
 
+@app.callback(
+    dash.dependencies.Output('dl-dropdown', 'value'),
+    [dash.dependencies.Input('button', 'n_clicks')],
+    [])
+def update_dropdown(n_click):
+    time.sleep(WAIT+1)
+    return df.shape[0]
+"""
+@app.callback(
+    dash.dependencies.Output('editstr', 'children'),
+    [dash.dependencies.Input('button', 'n_clicks')],
+    [])
+def update_dropdown(n_click):
+    time.sleep(WAIT+1)
+    return ''
+"""
 # Download
 @app.callback(
     dash.dependencies.Output('download-link', 'href'),
@@ -268,6 +329,24 @@ def update_download_link(audio_index):
     [dash.dependencies.Input('dl-dropdown', 'value')])
 def update_download_link(audio_index):
     return df.iloc[int(audio_index)-1]['Quotes']
+
+
+# Editing 
+@app.callback(
+    dash.dependencies.Output('editstr', 'children'),
+    [dash.dependencies.Input('button', 'n_clicks'),
+    dash.dependencies.Input('edit', 'n_clicks')],
+    [dash.dependencies.State('dl-dropdown', 'value')])
+def update_download_link(submit, n_clicks, video_index):
+    if not n_clicks: return ''
+    print(submit, n_clicks)
+    
+    video_edits = df.iloc[video_index-1]['Edits']
+    return '##### Use left side input boxes to edit.   Current edit: {}'.format(video_edits)
+
+
+
+
 
 external_css = [
     "https://cdnjs.cloudflare.com/ajax/libs/normalize/7.0.0/normalize.min.css",  # Normalize the CSS
@@ -284,4 +363,4 @@ for css in external_css:
 
 # Running the server
 if __name__ == '__main__':
-    app.run_server(debug=False, host='0.0.0.0', port=22222)
+    app.run_server(debug=1, host='0.0.0.0', port=22222)

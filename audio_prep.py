@@ -6,7 +6,7 @@ from pydub import AudioSegment
 
 SPLIT_INTERVAL=20000 # 1000 ms or 1 sec
 
-testfile = '2011'
+testfiles = ['2011', '2012']
 
 
 def splitter(sound, sound_name):
@@ -22,4 +22,5 @@ def splitter(sound, sound_name):
 
         file_index += 1
 
-splitter(AudioSegment.from_file('data/'+testfile+'.mp3'),testfile)
+for testfile in testfiles: 
+	splitter(AudioSegment.from_file('data/'+testfile+'.mp3'),testfile)

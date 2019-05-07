@@ -82,18 +82,18 @@ def file_finder(start, end, video_name):
     
 
 
-def cutter(video_name, timestr, quote):
+def cutter(video_name, timestr, quote, mono, edits):
     if not timestr:
         return True
+    edits = max(0, int(edits))
     start, end, dispstr = formatter_lv0(timestr.replace(' ',''))
     
-    export_file_name = dispstr.replace(':','_') + '_{}.mp3'.format(video_name)
+    export_file_name = dispstr.replace(':','_') + '_{}'.format(video_name) + ('_{}'.format(str(edits)) if edits else '') + '.mp3'
 
     # Determinant step
     interested = file_finder(start, end, video_name)
     try:
         interested.export('data/export/'+export_file_name, format='mp3')
-
     except:
         exit(1)
     
@@ -106,11 +106,12 @@ def cutter(video_name, timestr, quote):
     
     newRow = {'Index': df.shape[0]+1,
             'Quotes': quote,
-            'Time': dispstr,
+            'Time': timestr,
             'Length':audio_length,
             'Submission':generate_time,
-            'Download':'http://140.82.4.17/' + export_file_name,
-            'Source':video_name,
+            'Download':'http://144.202.14.79/' + export_file_name,
+            'Source': video_name,
+            'Edits': edits,
             }
 
     df = df.append(newRow,ignore_index=True)
