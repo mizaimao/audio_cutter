@@ -4,3 +4,4 @@ pandas==2.1.1
 numpy==1.26.0
 black==23.9.1
 pydub==0.25.1
+dash-player==1.1.0
