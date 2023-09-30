@@ -4,6 +4,40 @@ from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 import dash_player
 
+INSTRUCTION = """
+#### Instructions:
+###### Three types of inputs required:  
+1. Start and end timestamps to cut the audio. Format is   
+**minute:second:milliseconds** to **minute:second:milliseconds**   
+If left empty, 0 will be used.  
+**Example**: 25:52:000 - 25:57:000  
+2. Quote: What our great professor said in this quote.  
+**Example**: Oh actually I ge... I count...   
+3. Title: Used for naming the download files.  
+**Example**: oaic   
+"""
+
+TIMESTAMP_INSTRUCTION: str = """
+Timestamps: Input start and end timestamps to cut the audio. Format is **minute:second:milliseconds**  
+**Example**: 25:52:000 - 25:57:000 (Empty fields are treated as zeros)   
+"""
+QUOTE_INSTRUCTION: str = """
+Quote: What our great professor said in this quote.  
+**Example**: Oh actually I ge... I count...   
+"""
+TITLE_INSTRUCTION: str = """
+Title: Used for naming the download files.  
+**Example**: oaic  
+"""
+
+MINSEC_INPUT_STYLE = {
+    "width": "10%",
+    "display": "inline-block",
+    "min": "0",
+    "max": "59",
+}
+MSEC_INPUT_STYLE = {"width": "11%", "display": "inline-block", "min": "0", "max": "999"}
+
 
 def add_layout(app: Dash):
     app.layout = html.Div(
@@ -12,34 +46,35 @@ def add_layout(app: Dash):
             dbc.Row(
                 [
                     # Video and options.
-                    add_left_part(6),
+                    add_left_part(7),
                     # Cutting time slots and records.
-                    add_right_part(6),
+                    add_right_part(5),
                 ]
-            )
+            ),
         ]
     )
 
 
 def add_navbar():
     return dbc.NavbarSimple(
-    children=[
-    ],
-    brand="Online Audio Cutter for Prof. Hua Liang's Videos.",
-    brand_href="#",
-    color="primary",
-    dark=True,
-)
+        children=[],
+        brand="Online Audio Cutter for Prof. Hua Liang's Videos.",
+        brand_href="#",
+        color="primary",
+        dark=True,
+    )
+
 
 def add_left_part(width: int):
     return dbc.Col(
         [
             dbc.Row(
                 [
-                html.H3("Video Player"),
-                add_video_player(),
-                html.H3("Video Selection"),
-                add_video_selector(),
+                    html.H3("Video Selection"),
+                    add_video_selector(),
+                    html.Hr(),
+                    add_video_player(width=width),
+                    
                 ]
             ),
         ],
@@ -52,30 +87,167 @@ def add_left_part(width: int):
 def add_right_part(width: int):
     return dbc.Col(
         [
-            html.Div("Right chicken"),
-            dbc.Row(),
+            dbc.Row(
+                add_time_inputs(),
+            ),
         ],
         width={
             "size": width,
         },
     )
 
-def add_video_player():
+
+def add_time_inputs():
+    return (
+        html.Div(
+            [
+                html.H3("Inputs here"),
+                dcc.Markdown(TIMESTAMP_INSTRUCTION),
+                html.Div(
+                    [
+                        dcc.Input(
+                            id="start_min",
+                            type="number",
+                            style=MINSEC_INPUT_STYLE,
+                            min=0,
+                            max=59,
+                            value="",
+                        ),
+                        html.Div(
+                            dcc.Markdown(" :"),
+                            style={
+                                "width": "1%",
+                                "display": "inline-block",
+                                "marginLeft": "5",
+                            },
+                        ),
+                        dcc.Input(
+                            id="start_sec",
+                            type="number",
+                            style=MINSEC_INPUT_STYLE,
+                            min=0,
+                            max=59,
+                            value="",
+                        ),
+                        html.Div(
+                            dcc.Markdown(" :"),
+                            style={
+                                "width": "1%",
+                                "display": "inline-block",
+                                "marginLeft": "5",
+                            },
+                        ),
+                        dcc.Input(
+                            id="start_msec",
+                            type="number",
+                            style=MSEC_INPUT_STYLE,
+                            min=0,
+                            max=999,
+                            value="",
+                        ),
+                        html.Div(
+                            dcc.Markdown("  to "),
+                            style={
+                                "width": "3%",
+                                "display": "inline-block",
+                                "marginLeft": "8",
+                            },
+                        ),
+                        dcc.Input(
+                            id="end_min",
+                            type="number",
+                            style=MINSEC_INPUT_STYLE,
+                            min=0,
+                            max=59,
+                            value="",
+                        ),
+                        html.Div(
+                            dcc.Markdown(" :"),
+                            style={
+                                "width": "1%",
+                                "display": "inline-block",
+                                "marginLeft": "5",
+                            },
+                        ),
+                        dcc.Input(
+                            id="end_sec",
+                            type="number",
+                            style=MINSEC_INPUT_STYLE,
+                            min=0,
+                            max=59,
+                            value="",
+                        ),
+                        html.Div(
+                            dcc.Markdown(" :"),
+                            style={
+                                "width": "1%",
+                                "display": "inline-block",
+                                "marginLeft": "5",
+                            },
+                        ),
+                        dcc.Input(
+                            id="end_msec",
+                            type="number",
+                            style=MSEC_INPUT_STYLE,
+                            min=0,
+                            max=999,
+                            value="",
+                        ),
+                    ],
+                    style={
+                        "width": "600",
+                        "vertical-align": "middle",
+                        "marginBottom": "10",
+                    },
+                    className="container",
+                ),
+                dcc.Markdown(QUOTE_INSTRUCTION),
+                dbc.Input(
+                    id="quote_input",
+                    placeholder="Enter quote...",
+                    value="",
+                    style={"width": "85%"},
+                ),
+                dcc.Markdown(TITLE_INSTRUCTION),
+                dbc.Input(
+                    id="title_input",
+                    placeholder="Enter title...",
+                    value="",
+                    style={"width": "30%"},
+                ),
+                html.Label(""),  # Spacer.
+                html.Div(
+                    id="preview_string",
+                    children=" ",
+                ),
+                dbc.Button("Preview", id="time_button"),
+            ],
+            style={"margin": "30px 20px 15px 20px"},  # top right bottom left
+        ),
+    )
+
+
+def add_video_player(width: int):
+    height: int = int(450 // 6 * width)
     return dash_player.DashPlayer(
         id="player",
         url="https://www.youtube.com/watch?v=rd6qNEjJfps",
         controls=True,
         width="100%",
-        height="450px",
+        height=f"{height}px",
     )
+
 
 def add_video_selector():
     return dcc.Dropdown(
         id="video_selection_dropdown",
         options=[
-            {'label': 'Hua Liang: An introduction to R (2012 CBIM Summer School)', 'value': '2012'},
-            {'label': 'Hua Liang, PhD', 'value': '2011'},
-            {'label': 'SFSN Presents Hua Liang', 'value': '2023'},
+            {
+                "label": "Hua Liang: An introduction to R (2012 CBIM Summer School)",
+                "value": "2012",
+            },
+            {"label": "Hua Liang, PhD", "value": "2011"},
+            {"label": "SFSN Presents Hua Liang", "value": "2023"},
         ],
-        value='2012'
-        )
+        value="2012",
+    )
