@@ -1,10 +1,11 @@
 """Controls layout of the web app."""
 
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import dash_player
 
 from utils import get_empty_figure
+from runtime_manager import Control
 
 
 TIMESTAMP_INSTRUCTION: str = """
@@ -29,14 +30,17 @@ MINSEC_INPUT_STYLE = {
 MSEC_INPUT_STYLE = {"width": "11%", "display": "inline-block", "min": "0", "max": "999"}
 
 
-def add_layout(app: Dash):
+def add_layout(app: Dash, control: Control):
     app.layout = html.Div(
         [
+            # Add storage.
+            dcc.Store(id="audio_file_path"),
+            # Add main layout.
             add_navbar(),
             dbc.Row(
                 [
                     # Video and options.
-                    add_left_part(7),
+                    add_left_part(7, control=control),
                     # Cutting time slots and records.
                     add_right_part(5),
                 ]
@@ -55,7 +59,7 @@ def add_navbar():
     )
 
 
-def add_left_part(width: int):
+def add_left_part(width: int, control: Control):
     return dbc.Col(
         [
             dbc.Row(
@@ -64,6 +68,14 @@ def add_left_part(width: int):
                     add_video_selector(),
                     html.Hr(),
                     add_video_player(width=width),
+                    html.Hr(),
+                    html.Div(
+                        dash_table.DataTable(
+                            control.df.to_dict("records"),
+                            [{"name": i, "id": i} for i in control.df.columns],
+                        ),
+                        id="record_table",
+                    ),
                 ]
             ),
         ],
@@ -79,6 +91,8 @@ def add_right_part(width: int):
             dbc.Row(
                 [
                     add_time_inputs(),
+                    add_loader(),
+                    add_dual_buttons(),
                     add_audio_preview_panes(),
                 ]
             ),
@@ -89,9 +103,51 @@ def add_right_part(width: int):
     )
 
 
+def add_dual_buttons():
+    return html.Div(
+        [
+            dbc.Button(
+                "Load",
+                id="load_button",
+                color="success",
+                className="me-1",
+            ),
+            dbc.Button("Submit", id="submit_button", color="warning", className="me-1"),
+        ],
+        className="d-grid d-md-flex justify-content-md-around",
+    )
+
+
+def add_loader():
+    return html.Div(
+        [
+            html.Hr(),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dcc.Markdown("Load by index", id="submission_string"),
+                    ),
+                    dbc.Col(
+                        dbc.Input(
+                            id="load_input",
+                            type="number",
+                            min=0,
+                            placeholder="",
+                            value="",
+                            style={"width": "20%"},
+                        )
+                    ),
+                ]
+            ),
+            html.Hr(),
+        ]
+    )
+
+
 def add_audio_preview_panes():
     return dbc.Col(
         [
+            dcc.Graph(id="wave_plot", figure=get_empty_figure(height=250, width=600)),
             dbc.Row(
                 [
                     dash_player.DashPlayer(
@@ -102,20 +158,6 @@ def add_audio_preview_panes():
                         height="45px",
                     ),
                 ]
-            ),
-            html.Div(
-                [
-                    dbc.Button(
-                        "Preview",
-                        id="preview_button",
-                        color="success",
-                        className="me-1",
-                    ),
-                    dbc.Button(
-                        "Submit", id="submit_button", color="warning", className="me-1"
-                    ),
-                ],
-                className="d-grid d-md-flex justify-content-md-around",
             ),
         ]
     )
@@ -241,12 +283,8 @@ def add_time_inputs():
             html.Label(""),  # Spacer.
             dbc.Button("Cut", id="cut_button"),
             dcc.Markdown("before chicken", id="preview_string"),
-            # html.Br(),
-            dcc.Graph(id="wave_plot", figure=get_empty_figure(height=250, width=600)),
-            html.Label(""),  # Spacer.
-            html.Div(dcc.Markdown("before submission", id="submission_string")),
         ],
-        style={"margin": "30px 20px 15px 20px"},  # top right bottom left
+        style={"margin": "0px 0px 0px 0px"},  # top right bottom left
     )
 
 

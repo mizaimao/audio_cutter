@@ -58,24 +58,28 @@ def get_empty_figure(
     )
 
 
-def generate_preview(audio_obj: AudioSegment, height:int = 180, width: int = 650):
+def generate_preview(audio_obj: AudioSegment, height: int = 180, width: int = 650):
     """Make a wave plot."""
     samples: np.ndarray = np.array(audio_obj.get_array_of_samples())
     fig = px.line(samples, y=0, render_mode="webgl")  # "y=0" disables legend.
     fig.update_layout(
         yaxis_title="",
         yaxis_fixedrange=True,
+        xaxis_fixedrange=True,
     )
     # X-axis label.
     fig.update_xaxes(
         title="milliseconds",
     )
-    return fig.update_layout(
-        plot_bgcolor="white",
-        margin=dict(t=0, l=5, b=0, r=5),
-        height=height,
-        width=width,
-    ).update_xaxes(
-        title="milliseconds", linecolor="lightgrey", gridcolor="lightgrey"
-    ).update_yaxes(mirror=True, linecolor="lightgrey", gridcolor="lightgrey")
-    
+    return (
+        fig.update_layout(
+            plot_bgcolor="white",
+            margin=dict(t=0, l=5, b=0, r=5),
+            height=height,
+            width=width,
+        )
+        .update_xaxes(
+            title="milliseconds", linecolor="lightgrey", gridcolor="lightgrey"
+        )
+        .update_yaxes(mirror=True, linecolor="lightgrey", gridcolor="lightgrey")
+    )

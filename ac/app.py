@@ -7,7 +7,7 @@ from runtime_manager import Control
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 control: Control = Control()
-add_layout(app)
+add_layout(app, control)
 add_callbacks(app, control)
 
 if __name__ == "__main__":

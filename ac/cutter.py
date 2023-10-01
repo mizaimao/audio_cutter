@@ -104,7 +104,7 @@ def cut_audio(
     start, end, _ = formatter_lv0(time_str.replace(" ", ""))
 
     # Find related files and get the cut piece.
-    interested = file_finder(start, end, video_name + "_audio.m4a")
+    interested = file_finder(start, end, str(video_name) + "_audio.m4a")
     try:
         interested.export(
             OUTPUT_FOLDER.parent.joinpath("assets/temp/temp.mp3"),

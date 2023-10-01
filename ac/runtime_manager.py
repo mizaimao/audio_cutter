@@ -24,6 +24,10 @@ DEFAULT_COLS: List[str] = [
 ]
 
 
+class EntryNotFoundError(Exception):
+    pass
+
+
 class Control:
     def __init__(self):
         # Check or make record files.
@@ -79,7 +83,7 @@ class Control:
             df: pd.DataFrame = pd.DataFrame()
             df[DEFAULT_COLS] = None
         else:
-            df = pd.read_csv(self.df_file)
+            df = pd.read_csv(self.df_file, index_col=[0])
         return df
 
     def update_df(self):
@@ -92,7 +96,9 @@ class Control:
         name.
         """
         if self.temp_pointer is not None:
-            os.remove(self.parent.joinpath(self.temp_pointer))
+            old_file_path: Path = self.parent.joinpath(self.temp_pointer)
+            if old_file_path.is_file():
+                os.remove(old_file_path)
 
         temp_file_name: str = TEMP_PREFIX + datetime.datetime.now().strftime(
             "%Y_%m_%d_%H_%M_%S_%f"
@@ -106,10 +112,14 @@ class Control:
         self.current_entry = new_entry
         return self.temp_pointer
 
-    def add_entry(self):
+    def add_entry(self) -> str:
         """
         Submit current (temp) entry to df and give the temp audio file a name.
+        Returns finalized path of moved audio file.
         """
+        if self.current_entry is None:
+            return ""
+
         # Complete df entry dict, and update df.
         new_entry: Dict[str, Any] = self.current_entry
         new_entry["Index"] = self.current_index
@@ -119,16 +129,73 @@ class Control:
                 pd.DataFrame.from_dict([new_entry], orient="columns"),
             ]
         )
+        self.df = self.df[DEFAULT_COLS]
         # Now update index and save stuffs to disk.
         self.current_index += 1
         self.update_index()
         self.update_df()
         # Save the audio file.
+        new_url: Path = f"assets/saves/{new_entry['Title']}_{new_entry['Source']}.mp3"
         shutil.copy(
             self.parent.joinpath(self.temp_pointer),
-            self.parent.joinpath(
-                f"assets/saves/{new_entry['Title']}_{new_entry['Source']}.mp3"
-            ),
+            self.parent.joinpath(new_url),
         )
         # Remove previous temp files.
         self.remove_temp_files()
+
+        # Clear current entry to prevent duplicates.
+        self.current_entry = None
+
+        return new_url
+
+    def load_entry(self, index: int):
+        """Use an index to load an audio piece and meta."""
+        assert isinstance(index, int), f"Unexpected index type: {type(index)}."
+
+        _record: List[Dict[str, Any]] = self.df[self.df["Index"].isin([index])].to_dict(
+            "records"
+        )
+        if len(_record) != 1:
+            raise EntryNotFoundError
+        record: Dict[str, Any] = _record[0]
+
+        times: List[str] = record["Time"].split("-")
+        # start_min, sec, msec, end_min, sec, msec
+        entry_times: List[int] = Control.split_time(times[0]) + Control.split_time(
+            times[1]
+        )
+
+        quote: str = record["Quotes"]
+        title: str = record["Title"]
+        video: str = record["Source"]
+
+        # Copy original audio to a temp one and get address.
+        audio_short_url: str = f"assets/saves/{record['Title']}_{record['Source']}.mp3"
+        temp_file_name: str = TEMP_PREFIX + datetime.datetime.now().strftime(
+            "%Y_%m_%d_%H_%M_%S_%f"
+        )
+        shutil.copy(
+            self.parent.joinpath(audio_short_url),
+            self.parent.joinpath(f"assets/temp/{temp_file_name}.mp3"),
+        )
+        self.temp_pointer = f"assets/temp/{temp_file_name}.mp3"
+
+        # Update current pointer.
+        self.current_entry = {
+            "Title": title,
+            "Quotes": quote,
+            "Time": record["Time"],
+            "Length": record["Length"],
+            "Submission": record["Submission"],
+            "Source": str(video),
+            "Edits": 0,
+        }
+
+        return (
+            entry_times + [quote, title, video],
+            self.temp_pointer,
+        )
+
+    @staticmethod
+    def split_time(time_str: str) -> Tuple[int, int, int]:
+        return [str(x) for x in time_str.split(":")]
