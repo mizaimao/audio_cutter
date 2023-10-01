@@ -26,5 +26,6 @@ def timestamp_check(
     else:
         pass
 
-    if time_error_flag:
+    if time_error_flag and sum([start_min, start_sec, start_msec]) != 0:
         return "Start timestamp is larger than or equal to end timestamp."
+    return ""

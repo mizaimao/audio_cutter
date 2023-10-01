@@ -246,6 +246,10 @@ def add_time_inputs():
                 html.Div(
                     dcc.Markdown("before chicken", id="preview_string")
                 ),
+                html.Label(""),  # Spacer.
+                html.Div(
+                    dcc.Markdown("before submission", id="submission_string")
+                ),
             ],
             style={"margin": "30px 20px 15px 20px"},  # top right bottom left
         )
