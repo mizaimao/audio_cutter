@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from pydub import AudioSegment
 
@@ -93,7 +93,7 @@ def file_finder(start, end, video_name):
 
 def cut_audio(
     video_name: str, time_str: str, quote: str, title: str, mono: bool, edits: int
-):
+) -> Tuple[AudioSegment, Dict[str, Any]]:
     """
     Given a time range (in time_str), use the correct source (in video_name) to cut the requested
     small piece of audio. Updates the meta table as well.
@@ -107,8 +107,7 @@ def cut_audio(
     interested = file_finder(start, end, video_name + "_audio.m4a")
     try:
         interested.export(
-            # OUTPUT_FOLDER.joinpath(f"{title}_{video_name}.mp3"
-            OUTPUT_FOLDER.parent.joinpath("assets/temp.mp3"),
+            OUTPUT_FOLDER.parent.joinpath("assets/temp/temp.mp3"),
             format="mp3",
         )
     except:
@@ -129,7 +128,7 @@ def cut_audio(
         "Edits": edits,
     }
 
-    return new_row
+    return interested, new_row
 
 
 audioPath = "data/sample.aac"

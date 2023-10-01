@@ -4,22 +4,12 @@ from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 import dash_player
 
-INSTRUCTION = """
-#### Instructions:
-###### Three types of inputs required:  
-1. Start and end timestamps to cut the audio. Format is   
-**minute:second:milliseconds** to **minute:second:milliseconds**   
-If left empty, 0 will be used.  
-**Example**: 25:52:000 - 25:57:000  
-2. Quote: What our great professor said in this quote.  
-**Example**: Oh actually I ge... I count...   
-3. Title: Used for naming the download files.  
-**Example**: oaic   
-"""
+from utils import get_empty_figure
+
 
 TIMESTAMP_INSTRUCTION: str = """
 Timestamps: Input start and end timestamps to cut the audio. Format is **minute:second:milliseconds**  
-**Example**: 25:52:000 - 25:57:000 (Empty fields are treated as zeros)   
+**Example**: 25:54:720 - 25:57:000 (Empty fields are treated as zeros)   
 """
 QUOTE_INSTRUCTION: str = """
 Quote: What our great professor said in this quote.  
@@ -109,150 +99,154 @@ def add_audio_preview_panes():
                         url="assets/surch_pdf.mp3",
                         controls=True,
                         width="80%",
-                        height="45px"
+                        height="45px",
                     ),
-                ]),
+                ]
+            ),
             html.Div(
                 [
-                    dbc.Button("Preview", id="preview_button", color="success", className="me-1"),
-                    dbc.Button("Submit", id="submit_button", color="warning", className="me-1"),
+                    dbc.Button(
+                        "Preview",
+                        id="preview_button",
+                        color="success",
+                        className="me-1",
+                    ),
+                    dbc.Button(
+                        "Submit", id="submit_button", color="warning", className="me-1"
+                    ),
                 ],
-                className="d-grid d-md-flex justify-content-md-around"
+                className="d-grid d-md-flex justify-content-md-around",
             ),
         ]
     )
 
 
 def add_time_inputs():
-    return (
-        html.Div(
-            [
-                html.H3("Inputs here"),
-                dcc.Markdown(TIMESTAMP_INSTRUCTION),
-                html.Div(
-                    [
-                        dcc.Input(
-                            id="start_min",
-                            type="number",
-                            style=MINSEC_INPUT_STYLE,
-                            min=0,
-                            max=59,
-                            value="",
-                        ),
-                        html.Div(
-                            dcc.Markdown(" :"),
-                            style={
-                                "width": "1%",
-                                "display": "inline-block",
-                                "marginLeft": "5",
-                            },
-                        ),
-                        dcc.Input(
-                            id="start_sec",
-                            type="number",
-                            style=MINSEC_INPUT_STYLE,
-                            min=0,
-                            max=59,
-                            value="",
-                        ),
-                        html.Div(
-                            dcc.Markdown(" :"),
-                            style={
-                                "width": "1%",
-                                "display": "inline-block",
-                                "marginLeft": "5",
-                            },
-                        ),
-                        dcc.Input(
-                            id="start_msec",
-                            type="number",
-                            style=MSEC_INPUT_STYLE,
-                            min=0,
-                            max=999,
-                            value="",
-                        ),
-                        html.Div(
-                            dcc.Markdown("  to "),
-                            style={
-                                "width": "3%",
-                                "display": "inline-block",
-                                "marginLeft": "8",
-                            },
-                        ),
-                        dcc.Input(
-                            id="end_min",
-                            type="number",
-                            style=MINSEC_INPUT_STYLE,
-                            min=0,
-                            max=59,
-                            value="",
-                        ),
-                        html.Div(
-                            dcc.Markdown(" :"),
-                            style={
-                                "width": "1%",
-                                "display": "inline-block",
-                                "marginLeft": "5",
-                            },
-                        ),
-                        dcc.Input(
-                            id="end_sec",
-                            type="number",
-                            style=MINSEC_INPUT_STYLE,
-                            min=0,
-                            max=59,
-                            value="",
-                        ),
-                        html.Div(
-                            dcc.Markdown(" :"),
-                            style={
-                                "width": "1%",
-                                "display": "inline-block",
-                                "marginLeft": "5",
-                            },
-                        ),
-                        dcc.Input(
-                            id="end_msec",
-                            type="number",
-                            style=MSEC_INPUT_STYLE,
-                            min=0,
-                            max=999,
-                            value="",
-                        ),
-                    ],
-                    style={
-                        "width": "600",
-                        "vertical-align": "middle",
-                        "marginBottom": "10",
-                    },
-                    className="container",
-                ),
-                dcc.Markdown(QUOTE_INSTRUCTION),
-                dbc.Input(
-                    id="quote_input",
-                    placeholder="Enter quote...",
-                    value="",
-                    style={"width": "85%"},
-                ),
-                dcc.Markdown(TITLE_INSTRUCTION),
-                dbc.Input(
-                    id="title_input",
-                    placeholder="Enter title...",
-                    value="",
-                    style={"width": "30%"},
-                ),
-                html.Label(""),  # Spacer.
-                dbc.Button("Cut", id="cut_button"),
-                html.Div(
-                    dcc.Markdown("before chicken", id="preview_string")
-                ),
-                html.Label(""),  # Spacer.
-                html.Div(
-                    dcc.Markdown("before submission", id="submission_string")
-                ),
-            ],
-            style={"margin": "30px 20px 15px 20px"},  # top right bottom left
-        )
+    return html.Div(
+        [
+            html.H3("Inputs here"),
+            dcc.Markdown(TIMESTAMP_INSTRUCTION),
+            html.Div(
+                [
+                    dcc.Input(
+                        id="start_min",
+                        type="number",
+                        style=MINSEC_INPUT_STYLE,
+                        min=0,
+                        max=59,
+                        value="",
+                    ),
+                    html.Div(
+                        dcc.Markdown(" :"),
+                        style={
+                            "width": "1%",
+                            "display": "inline-block",
+                            "marginLeft": "5",
+                        },
+                    ),
+                    dcc.Input(
+                        id="start_sec",
+                        type="number",
+                        style=MINSEC_INPUT_STYLE,
+                        min=0,
+                        max=59,
+                        value="",
+                    ),
+                    html.Div(
+                        dcc.Markdown(" :"),
+                        style={
+                            "width": "1%",
+                            "display": "inline-block",
+                            "marginLeft": "5",
+                        },
+                    ),
+                    dcc.Input(
+                        id="start_msec",
+                        type="number",
+                        style=MSEC_INPUT_STYLE,
+                        min=0,
+                        max=999,
+                        value="",
+                    ),
+                    html.Div(
+                        dcc.Markdown("  to "),
+                        style={
+                            "width": "3%",
+                            "display": "inline-block",
+                            "marginLeft": "8",
+                        },
+                    ),
+                    dcc.Input(
+                        id="end_min",
+                        type="number",
+                        style=MINSEC_INPUT_STYLE,
+                        min=0,
+                        max=59,
+                        value="",
+                    ),
+                    html.Div(
+                        dcc.Markdown(" :"),
+                        style={
+                            "width": "1%",
+                            "display": "inline-block",
+                            "marginLeft": "5",
+                        },
+                    ),
+                    dcc.Input(
+                        id="end_sec",
+                        type="number",
+                        style=MINSEC_INPUT_STYLE,
+                        min=0,
+                        max=59,
+                        value="",
+                    ),
+                    html.Div(
+                        dcc.Markdown(" :"),
+                        style={
+                            "width": "1%",
+                            "display": "inline-block",
+                            "marginLeft": "5",
+                        },
+                    ),
+                    dcc.Input(
+                        id="end_msec",
+                        type="number",
+                        style=MSEC_INPUT_STYLE,
+                        min=0,
+                        max=999,
+                        value="",
+                    ),
+                ],
+                style={
+                    "width": "600",
+                    "vertical-align": "middle",
+                    "marginBottom": "10",
+                },
+                className="container",
+            ),
+            dcc.Markdown(QUOTE_INSTRUCTION),
+            dbc.Input(
+                id="quote_input",
+                placeholder="Enter quote...",
+                value="",
+                style={"width": "85%"},
+            ),
+            dcc.Markdown(TITLE_INSTRUCTION),
+            dbc.Input(
+                id="title_input",
+                placeholder="Enter title...",
+                value="",
+                style={"width": "30%"},
+            ),
+            html.Label(""),  # Spacer.
+            dbc.Button("Cut", id="cut_button"),
+            dcc.Markdown("before chicken", id="preview_string"),
+            # html.Br(),
+            dcc.Graph(id="wave_plot", figure=get_empty_figure(height=250, width=600)),
+            html.Label(""),  # Spacer.
+            html.Div(dcc.Markdown("before submission", id="submission_string")),
+        ],
+        style={"margin": "30px 20px 15px 20px"},  # top right bottom left
     )
 
 

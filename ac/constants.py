@@ -16,3 +16,4 @@ DEFAULT_AUDIO_SOURCES: Dict[str, str] = {
 SPLIT_INTERVAL: int = 20000  # in ms, 1000 ms == 1 sec
 ASSET_FOLDER: Path = Path(__file__).parent.joinpath("assets")
 OUTPUT_FOLDER: Path = Path(__file__).parent.joinpath("saves")
+TEMP_PREFIX: str = "ztemp_"
