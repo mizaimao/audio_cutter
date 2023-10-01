@@ -1,5 +1,8 @@
-dash==0.35.1   
-dash-core-components==0.42.1   
-dash-html-components==0.13.4   
-dash-renderer==0.15.1   
-dash-table==3.1.11   
+dash==2.13.0
+dash_bootstrap_components-1.5.0
+pandas==2.1.1
+numpy==1.26.0
+black==23.9.1
+pydub==0.25.1
+dash-player==1.1.0
+tqdm==4.66.1
