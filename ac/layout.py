@@ -74,7 +74,6 @@ def add_left_part(width: int):
                     add_video_selector(),
                     html.Hr(),
                     add_video_player(width=width),
-                    
                 ]
             ),
         ],
@@ -88,12 +87,39 @@ def add_right_part(width: int):
     return dbc.Col(
         [
             dbc.Row(
-                add_time_inputs(),
+                [
+                    add_time_inputs(),
+                    add_audio_preview_panes(),
+                ]
             ),
         ],
         width={
             "size": width,
         },
+    )
+
+
+def add_audio_preview_panes():
+    return dbc.Col(
+        [
+            dbc.Row(
+                [
+                    dash_player.DashPlayer(
+                        id="audio_player",
+                        url="assets/surch_pdf.mp3",
+                        controls=True,
+                        width="80%",
+                        height="45px"
+                    ),
+                ]),
+            html.Div(
+                [
+                    dbc.Button("Preview", id="preview_button", color="success", className="me-1"),
+                    dbc.Button("Submit", id="submit_button", color="warning", className="me-1"),
+                ],
+                className="d-grid d-md-flex justify-content-md-around"
+            ),
+        ]
     )
 
 
@@ -216,14 +242,13 @@ def add_time_inputs():
                     style={"width": "30%"},
                 ),
                 html.Label(""),  # Spacer.
+                dbc.Button("Cut", id="cut_button"),
                 html.Div(
-                    id="preview_string",
-                    children=" ",
+                    dcc.Markdown("before chicken", id="preview_string")
                 ),
-                dbc.Button("Preview", id="time_button"),
             ],
             style={"margin": "30px 20px 15px 20px"},  # top right bottom left
-        ),
+        )
     )
 
 

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import datetime
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
 import pydub
 from pydub import AudioSegment
 
+from ac.constants import ASSET_FOLDER, DEFAULT_AUDIO_SOURCES, SPLIT_INTERVAL, OUTPUT_FOLDER
 
-SPLIT_INTERVAL = 20000
 
 audioPath = "data/sample.aac"
 testInterval = "0:30-1:3"
@@ -41,12 +42,12 @@ def formatter_lv1(singleTS):
     return totalmsec, formatted_str
 
 
-def formatter_lv0(timestring: str):
-    if len(timestring) > 50:
+def formatter_lv0(time_string: str):
+    if len(time_string) > 50:
         raise ValueError("too long")
     tmpstr = []
     try:
-        tmpstr = timestring.split("-")
+        tmpstr = time_string.split("-")
     except:
         raise ValueError("""must include '-' """)
     assert len(tmpstr) == 2
@@ -66,7 +67,10 @@ def file_finder(start, end, video_name):
     end_point = end % SPLIT_INTERVAL
 
     sound = AudioSegment.from_file(
-        "data/processed/{}_{}_{}.mp3".format(video_name, start_file, SPLIT_INTERVAL)
+        ASSET_FOLDER.joinpath(
+            "processed/{}_{}_{}.mp3".format(video_name, start_file, SPLIT_INTERVAL)
+        )
+        
     )
 
     if start_file == end_file:
@@ -76,7 +80,9 @@ def file_finder(start, end, video_name):
         left = start_file + 1
         while left <= end_file:
             temp = AudioSegment.from_file(
-                "data/processed/{}_{}_{}.mp3".format(video_name, left, SPLIT_INTERVAL)
+                ASSET_FOLDER.joinpath(
+                    "processed/{}_{}_{}.mp3".format(video_name, left, SPLIT_INTERVAL)
+                )
             )
             if left == end_file:
                 temp = temp[:end_point]
@@ -87,11 +93,15 @@ def file_finder(start, end, video_name):
         exit(1)
 
 
-def cutter(video_name: str, timestr: str, quote: str, mono: bool, edits: int):
-    if not timestr:
+def cut_audio(video_name: str, time_str: str, quote: str, mono: bool, edits: int):
+    """
+    Given a time range (in time_str), use the correct source (in video_name) to cut the requested
+    small piece of audio. Updates the meta table as well.
+    """
+    if not time_str:
         return True
     edits = max(0, int(edits))
-    start, end, dispstr = formatter_lv0(timestr.replace(" ", ""))
+    start, end, dispstr = formatter_lv0(time_str.replace(" ", ""))
 
     export_file_name = (
         dispstr.replace(":", "_")
@@ -103,7 +113,11 @@ def cutter(video_name: str, timestr: str, quote: str, mono: bool, edits: int):
     # Determinant step
     interested = file_finder(start, end, video_name)
     try:
-        interested.export("data/export/" + export_file_name, format="mp3")
+        interested.export(
+            OUTPUT_FOLDER.joinpath(
+                export_file_name, format="mp3"
+            )
+        )
     except:
         exit(1)
 
@@ -117,7 +131,7 @@ def cutter(video_name: str, timestr: str, quote: str, mono: bool, edits: int):
     newRow = {
         "Index": df.shape[0] + 1,
         "Quotes": quote,
-        "Time": timestr,
+        "Time": time_str,
         "Length": audio_length,
         "Submission": generate_time,
         "Download": "http://144.202.14.79/" + export_file_name,
