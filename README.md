@@ -2,6 +2,10 @@
 # audio_cutter
 ## Description
 This is a web service enabling audio extraction from given intervals in several selected YouTube videos. The program is based on Dash, and the backend is using python3.  
+
+## Screenshot
+![Screenshot 2023-10-01 at 6 03 48 PM](https://github.com/user-attachments/assets/d9ba5641-3285-4115-ba7e-4056339a05c3)
+
 ## Scripts
 #### app.py
 Main execution script.
